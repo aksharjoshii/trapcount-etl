@@ -32,9 +32,9 @@ st.title("Trap Count ETL Calculator")
 # Upload CSV
 uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
-# ETL inputs
-pest_etl = st.number_input("Enter Pest Count per Leaf ETL (optional)", min_value=0.0, step=0.1, value=None, format="%.2f")
-damage_etl = st.number_input("Enter % Leaf Damage ETL (optional)", min_value=0.0, step=0.1, value=None, format="%.2f")
+# ETL inputs (default 0 → treated as "not provided")
+pest_etl = st.number_input("Enter Pest Count per Leaf ETL (optional)", min_value=0.0, step=0.1, value=0.0, format="%.2f")
+damage_etl = st.number_input("Enter % Leaf Damage ETL (optional)", min_value=0.0, step=0.1, value=0.0, format="%.2f")
 
 # Submit button
 if st.button("Submit"):
@@ -47,10 +47,12 @@ if st.button("Submit"):
         if not all(col in df.columns for col in required_cols):
             st.error(f"CSV must contain columns: {required_cols}")
         else:
+            # Convert 0 to None (treat as missing)
+            pest_val = pest_etl if pest_etl > 0 else None
+            damage_val = damage_etl if damage_etl > 0 else None
+
             # Calculate ETL
-            trap_etl = calculate_trap_count_etl(df, 
-                                                pest_etl if pest_etl > 0 else None, 
-                                                damage_etl if damage_etl > 0 else None)
+            trap_etl = calculate_trap_count_etl(df, pest_val, damage_val)
 
             if trap_etl is not None:
                 st.metric("Trap Count ETL", f"{trap_etl:.2f}")
@@ -62,8 +64,8 @@ if st.button("Submit"):
 
             # Scatter plot: Pest count vs Trap count
             ax[0].scatter(df["Trap_counts"], df["No_of_pests"], c="blue", label="Pests/Leaf")
-            if pest_etl and trap_etl:
-                ax[0].axhline(pest_etl, color="red", linestyle="--", label="Pest ETL")
+            if pest_val and trap_etl:
+                ax[0].axhline(pest_val, color="red", linestyle="--", label="Pest ETL")
                 ax[0].axvline(trap_etl, color="green", linestyle="--", label="Trap ETL")
             ax[0].set_xlabel("Trap Counts")
             ax[0].set_ylabel("Pests per Leaf")
@@ -72,8 +74,8 @@ if st.button("Submit"):
 
             # Scatter plot: % Leaf Damage vs Trap count
             ax[1].scatter(df["Trap_counts"], df["Percent_damage"], c="orange", label="% Leaf Damage")
-            if damage_etl and trap_etl:
-                ax[1].axhline(damage_etl, color="red", linestyle="--", label="Damage ETL")
+            if damage_val and trap_etl:
+                ax[1].axhline(damage_val, color="red", linestyle="--", label="Damage ETL")
                 ax[1].axvline(trap_etl, color="green", linestyle="--", label="Trap ETL")
             ax[1].set_xlabel("Trap Counts")
             ax[1].set_ylabel("% Leaf Damage")
