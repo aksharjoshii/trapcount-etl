@@ -63,8 +63,8 @@ if st.button("Submit"):
                 below_etl_values = trap_values[trap_values < trap_etl] if trap_etl else trap_values
 
                 if not below_etl_values.empty:
-                    low_thr = np.percentile(below_etl_values, 33)
-                    med_thr = np.percentile(below_etl_values, 66)
+                    low_thr = trap_etl * 0.33
+                    med_thr = trap_etl * 0.66
                     high_thr = trap_etl  # ETL is the upper cutoff
 
                     # ---- Display Metrics Row ----
